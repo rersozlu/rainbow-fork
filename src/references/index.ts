@@ -1,37 +1,37 @@
 import { mapKeys, mapValues } from 'lodash';
 import { savingsAssets } from './compound';
-import { default as DefaultTokenListsSource } from './default-token-lists.json';
+import { default as DefaultTokenListsSource } from './default-token-lists';
 import {
   Asset,
   SavingsAsset,
   UniswapFavoriteTokenData,
 } from '@rainbow-me/entities';
 import { Network } from '@rainbow-me/helpers/networkTypes';
-export { default as polygonAllowList } from './polygon-allowlist.json';
-export { default as balanceCheckerContractAbi } from './balances-checker-abi.json';
-export { default as balanceCheckerContractAbiOVM } from './balances-checker-abi-ovm.json';
-export { default as chains } from './chains.json';
-export { default as arbitrumTokenMapping } from './arbitrum-token-mapping.json';
-export { default as chainAssets } from './chain-assets.json';
-export { default as coingeckoIdsFallback } from './coingecko/ids.json';
+export { default as polygonAllowList } from './polygon-allowlist';
+export { default as balanceCheckerContractAbi } from './balances-checker-abi';
+export { default as balanceCheckerContractAbiOVM } from './balances-checker-abi-ovm';
+export { default as chains } from './chains';
+export { default as arbitrumTokenMapping } from './arbitrum-token-mapping';
+export { default as chainAssets } from './chain-assets';
+export { default as coingeckoIdsFallback } from './coingecko/ids';
 export { compoundCERC20ABI, compoundCETHABI } from './compound';
 export { DefaultTokenListsSource as DefaultTokenLists };
 export {
   signatureRegistryABI,
   SIGNATURE_REGISTRY_ADDRESS,
 } from './signatureRegistry';
-export { default as emojis } from './emojis.json';
-export { default as ensIntroMarqueeNames } from './ens-intro-marquee-names.json';
-export { default as erc20ABI } from './erc20-abi.json';
-export { default as optimismGasOracleAbi } from './optimism-gas-oracle-abi.json';
-export { default as ethUnits } from './ethereum-units.json';
-export { default as timeUnits } from './time-units.json';
+export { default as emojis } from './emojis';
+export { default as ensIntroMarqueeNames } from './ens-intro-marquee-names';
+export { default as erc20ABI } from './erc20-abi';
+export { default as optimismGasOracleAbi } from './optimism-gas-oracle-abi';
+export { default as ethUnits } from './ethereum-units';
+export { default as timeUnits } from './time-units';
 export { DPI_ADDRESS } from './indexes';
 
-export { default as migratedTokens } from './migratedTokens.json';
-export { default as supportedNativeCurrencies } from './native-currencies.json';
-export { default as shitcoins } from './shitcoins.json';
-export { default as smartContractMethods } from './smartcontract-methods.json';
+export { default as migratedTokens } from './migratedTokens';
+export { default as supportedNativeCurrencies } from './native-currencies';
+export { default as shitcoins } from './shitcoins';
+export { default as smartContractMethods } from './smartcontract-methods';
 export {
   PAIR_GET_RESERVES_CALL_DATA,
   PAIR_GET_RESERVES_FRAGMENT,

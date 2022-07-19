@@ -1,8 +1,8 @@
-export { default as ENSRegistryWithFallbackABI } from './ENSRegistryWithFallback.json';
-export { default as ENSETHRegistrarControllerABI } from './ENSETHRegistrarController.json';
-export { default as ENSReverseRegistrarABI } from './ENSReverseRegistrar.json';
-export { default as ENSBaseRegistrarImplementationABI } from './ENSBaseRegistrarImplementation.json';
-export { default as ENSPublicResolverABI } from './ENSPublicResolver.json';
+export { default as ENSRegistryWithFallbackABI } from './ENSRegistryWithFallback';
+export { default as ENSETHRegistrarControllerABI } from './ENSETHRegistrarController';
+export { default as ENSReverseRegistrarABI } from './ENSReverseRegistrar';
+export { default as ENSBaseRegistrarImplementationABI } from './ENSBaseRegistrarImplementation';
+export { default as ENSPublicResolverABI } from './ENSPublicResolver';
 
 export const ensRegistryAddress = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
 export const ensETHRegistrarControllerAddress =

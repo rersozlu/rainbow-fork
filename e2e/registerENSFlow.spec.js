@@ -4,8 +4,8 @@ import { exec } from 'child_process';
 import { hash } from '@ensdomains/eth-ens-namehash';
 import { Contract } from '@ethersproject/contracts';
 import * as Helpers from './helpers';
-import registrarABI from '@rainbow-me/references/ens/ENSETHRegistrarController.json';
-import publicResolverABI from '@rainbow-me/references/ens/ENSPublicResolver.json';
+import registrarABI from '@rainbow-me/references/ens/ENSETHRegistrarController';
+import publicResolverABI from '@rainbow-me/references/ens/ENSPublicResolver';
 const ensETHRegistrarControllerAddress =
   '0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5';
 const ensPublicResolverAddress = '0x4976fb03C32e5B8cfe2b6cCB31c09Ba78EBaBa41';

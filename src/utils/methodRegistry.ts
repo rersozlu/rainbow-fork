@@ -1,7 +1,7 @@
 import { Contract } from '@ethersproject/contracts';
 import { web3Provider } from '../handlers/web3';
-import namesOverrides from '../references/method-names-overrides.json';
-import methodRegistryABI from '../references/method-registry-abi.json';
+import namesOverrides from '../references/method-names-overrides';
+import methodRegistryABI from '../references/method-registry-abi';
 import { metadataClient } from '@rainbow-me/apollo/client';
 import { CONTRACT_FUNCTION } from '@rainbow-me/apollo/queries';
 

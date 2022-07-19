@@ -1,4 +1,3 @@
-/* eslint-disable sort-keys-fix/sort-keys-fix */
 const fs = require('fs');
 const path = require('path');
 const { parse: babelParse } = require('@babel/parser');
@@ -43,6 +42,8 @@ module.exports = {
   },
   plugins: [],
   globals: globalVars,
-  rules: {},
+  rules: {
+    'sort-keys-fix/sort-keys-fix': 0,
+  },
   env: { browser: true, node: true },
 };

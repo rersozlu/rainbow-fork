@@ -2,10 +2,10 @@ import { Interface } from '@ethersproject/abi';
 import { ChainId, Token, WETH } from '@uniswap/sdk';
 import { abi as IUniswapV2PairABI } from '@uniswap/v2-core/build/IUniswapV2Pair.json';
 import { DAI_ADDRESS, USDC_ADDRESS } from '../';
-import MULTICALL_ABI from './uniswap-multicall-abi.json';
+import MULTICALL_ABI from './uniswap-multicall-abi';
 
-import { default as UNISWAP_TESTNET_TOKEN_LIST } from './uniswap-pairs-testnet.json';
-import { abi as UNISWAP_V2_ROUTER_ABI } from './uniswap-v2-router.json';
+import { default as UNISWAP_TESTNET_TOKEN_LIST } from './uniswap-pairs-testnet';
+import { default as UNISWAP_V2_ROUTER } from './uniswap-v2-router';
 import UNISWAP_V1_EXCHANGE_ABI from './v1-exchange-abi';
 
 const UNISWAP_V2_ROUTER_ADDRESS = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D';
@@ -45,6 +45,6 @@ export {
   UNISWAP_TESTNET_TOKEN_LIST,
   UNISWAP_V1_EXCHANGE_ABI,
   UNISWAP_V2_BASES,
-  UNISWAP_V2_ROUTER_ABI,
   UNISWAP_V2_ROUTER_ADDRESS,
 };
+export const UNISWAP_V2_ROUTER_ABI = UNISWAP_V2_ROUTER.abi;
