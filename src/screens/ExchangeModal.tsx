@@ -75,6 +75,7 @@ import {
 } from '@/raps';
 import {
   swapClearState,
+  SwapModalField,
   TypeSpecificParameters,
   updateSwapSlippage,
   updateSwapTypeDetails,
@@ -85,6 +86,8 @@ import { ethereumUtils, gasUtils } from '@/utils';
 import { useEthUSDPrice } from '@/utils/ethereumUtils';
 import logger from 'logger';
 import { IS_ANDROID, IS_TEST } from '@/env';
+import { SwapMetadata } from '@/raps/common';
+import store from '@/redux/store';
 
 export const DEFAULT_SLIPPAGE_BIPS = {
   [Network.mainnet]: 100,
@@ -579,6 +582,7 @@ export default function ExchangeModal({
 
   const submit = useCallback(
     async amountInUSD => {
+      console.log('bbbbb');
       setIsAuthorizing(true);
       const NotificationManager = ios
         ? NativeModules.NotificationManager
@@ -605,6 +609,12 @@ export default function ExchangeModal({
         };
         logger.log('[exchange - handle submit] rap');
         const nonce = await getNextNonce();
+        const {
+          independentField,
+          independentValue,
+          slippageInBips,
+          source,
+        } = store.getState().swap;
         const swapParameters = {
           chainId,
           flashbots,
@@ -612,7 +622,18 @@ export default function ExchangeModal({
           nonce,
           outputAmount: outputAmount!,
           tradeDetails: tradeDetails!,
+          meta: {
+            flashbots,
+            from: inputCurrency,
+            to: outputCurrency,
+            independentField: independentField as SwapModalField,
+            independentValue: independentValue as string,
+            slippage: slippageInBips / 100,
+            route: source,
+          },
         };
+
+        console.log('DSFSDFSDFDFS', swapParameters.meta);
         const rapType = getSwapRapTypeByExchangeType(type);
         await executeRap(wallet, rapType, swapParameters, callback);
         logger.log('[exchange - handle submit] executed rap!');

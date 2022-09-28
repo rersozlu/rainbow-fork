@@ -142,6 +142,7 @@ export const createUnlockAndSwapRap = async (
     permit: swapAssetNeedsUnlocking && allowsPermit,
     requiresApprove: swapAssetNeedsUnlocking && !allowsPermit,
     tradeDetails,
+    meta: swapParameters.meta,
   });
   actions = actions.concat(swap);
 
