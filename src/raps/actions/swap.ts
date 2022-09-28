@@ -18,16 +18,21 @@ import store from '@/redux/store';
 import { greaterThan } from '@/helpers/utilities';
 import { AllowancesCache, ethereumUtils, gasUtils } from '@/utils';
 import logger from '@/utils/logger';
+import { MMKV } from 'react-native-mmkv';
+import { STORAGE_IDS } from '@/model/mmkv';
 
 const actionName = 'swap';
+
+export const metadataStorage = new MMKV({
+  id: STORAGE_IDS.SWAPS_METADATA_STORAGE,
+});
 
 const swap = async (
   wallet: Wallet,
   currentRap: Rap,
   index: number,
   parameters: RapExchangeActionParameters,
-  baseNonce?: number,
-  meta?: SwapMetadata
+  baseNonce?: number
 ): Promise<number | undefined> => {
   logger.log(`[${actionName}] base nonce`, baseNonce, 'index:', index);
   const {
@@ -146,16 +151,17 @@ const swap = async (
     to: swap?.to ?? null,
     type: TransactionType.trade,
     value: (swap && toHex(swap.value)) || undefined,
-    meta: meta
-      ? {
-          type: 'swap' as const,
-          data: meta,
-        }
-      : undefined,
   };
   logger.log(`[${actionName}] adding new txn`, newTransaction);
 
-  console.log(meta);
+  console.log(newTransaction, parameters.meta, 'GGGGGG');
+  if (parameters.meta && swap?.hash) {
+    metadataStorage.set(
+      swap.hash.toLowerCase(),
+      JSON.stringify({ type: 'swap', data: parameters.meta })
+    );
+  }
+
   dispatch(
     dataAddNewTransaction(
       newTransaction,

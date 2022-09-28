@@ -48,11 +48,6 @@ export interface RainbowTransaction {
   value?: BigNumberish; // for pending tx
 }
 
-type TransactionMetadata = {
-  type: 'swap';
-  data: SwapMetadata;
-};
-
 export interface NewTransaction {
   amount: string | null;
   asset: ParsedAddressAsset | null;
@@ -78,7 +73,6 @@ export interface NewTransaction {
   type?: TransactionType;
   value?: BigNumberish;
   txTo?: EthereumAddress | null;
-  meta: TransactionMetadata | undefined;
 }
 
 export interface NewTransactionOrAddCashTransaction
