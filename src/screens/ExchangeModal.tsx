@@ -88,6 +88,7 @@ import logger from 'logger';
 import { IS_ANDROID, IS_TEST } from '@/env';
 import { SwapMetadata } from '@/raps/common';
 import store from '@/redux/store';
+import useParamsForExchangeModal from '@/hooks/useParamsForExchangeModal';
 
 export const DEFAULT_SLIPPAGE_BIPS = {
   [Network.mainnet]: 100,
@@ -580,9 +581,10 @@ export default function ExchangeModal({
     }
   };
 
+  const isFillingParams = useParamsForExchangeModal();
+
   const submit = useCallback(
     async amountInUSD => {
-      console.log('bbbbb');
       setIsAuthorizing(true);
       const NotificationManager = ios
         ? NativeModules.NotificationManager
@@ -989,7 +991,9 @@ export default function ExchangeModal({
                 setInputAmount={updateInputAmount}
                 setNativeAmount={updateNativeAmount}
                 testID={`${testID}-input`}
-                updateAmountOnFocus={maxInputUpdate || flipCurrenciesUpdate}
+                updateAmountOnFocus={
+                  maxInputUpdate || flipCurrenciesUpdate || isFillingParams
+                }
               />
               {showOutputField && (
                 <ExchangeOutputField
@@ -1014,7 +1018,9 @@ export default function ExchangeModal({
                   outputFieldRef={outputFieldRef}
                   setOutputAmount={updateOutputAmount}
                   testID={`${testID}-output`}
-                  updateAmountOnFocus={maxInputUpdate || flipCurrenciesUpdate}
+                  updateAmountOnFocus={
+                    maxInputUpdate || flipCurrenciesUpdate || isFillingParams
+                  }
                 />
               )}
             </FloatingPanel>
