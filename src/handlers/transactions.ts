@@ -108,7 +108,7 @@ export const showTransactionDetailsSheet = (
   contacts: { [p: string]: Contact },
   accountAddress: string
 ) => {
-  const {
+  let {
     hash,
     from,
     minedAt,
@@ -139,7 +139,6 @@ export const showTransactionDetailsSheet = (
     status === TransactionStatus.failed &&
     type === TransactionType.trade;
 
-  console.log(parsedMeta, hash, metadataStorage.getAllKeys());
   const date = getHumanReadableDate(minedAt);
   const isSent =
     status === TransactionStatusTypes.sending ||

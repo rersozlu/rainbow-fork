@@ -635,7 +635,6 @@ export default function ExchangeModal({
           },
         };
 
-        console.log('DSFSDFSDFDFS', swapParameters.meta);
         const rapType = getSwapRapTypeByExchangeType(type);
         await executeRap(wallet, rapType, swapParameters, callback);
         logger.log('[exchange - handle submit] executed rap!');
