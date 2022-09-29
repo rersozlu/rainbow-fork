@@ -5,7 +5,9 @@ import { metadataClient } from '@/apollo/client';
 import { CONTRACT_FUNCTION } from '@/apollo/queries';
 import {
   RainbowTransaction,
+  TransactionStatus,
   TransactionStatusTypes,
+  TransactionType,
   ZerionTransaction,
 } from '@/entities';
 import store from '@/redux/store';
@@ -30,6 +32,7 @@ import { Navigation } from '@/navigation';
 import { Contact } from '@/redux/contacts';
 import { metadataStorage } from '@/raps/actions/swap';
 import { SwapMetadata } from '@/raps/common';
+import WalletTypes from '@/helpers/walletTypes';
 
 const parseSignatureToTitle = (signature: string) => {
   const rawName = signature.match(/^([^)(]*)\((.*)\)([^)(]*)$/u);
@@ -122,15 +125,19 @@ export const showTransactionDetailsSheet = (
   }
 
   const parentTxHash = hash?.includes('-') ? hash.split('-')[0] : hash;
-  const wrappedMeta = JSON.parse(
-    metadataStorage.getString(parentTxHash?.toLowerCase() ?? '') ?? ''
-  );
+  const data = metadataStorage.getString(parentTxHash?.toLowerCase() ?? '');
+  const wrappedMeta = data ? JSON.parse(data) : {};
   let parsedMeta: undefined | SwapMetadata;
   if (wrappedMeta?.type === 'swap') {
     parsedMeta = wrappedMeta.data as SwapMetadata;
   }
 
-  const isRetryButtonVisible = true; // TODO
+  const isReadOnly =
+    store.getState().wallets.selected?.type === WalletTypes.readOnly ?? true;
+  const isRetryButtonVisible =
+    !isReadOnly &&
+    status === TransactionStatus.failed &&
+    type === TransactionType.trade;
 
   console.log(parsedMeta, hash, metadataStorage.getAllKeys());
   const date = getHumanReadableDate(minedAt);
