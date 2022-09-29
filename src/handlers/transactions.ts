@@ -108,7 +108,7 @@ export const showTransactionDetailsSheet = (
   contacts: { [p: string]: Contact },
   accountAddress: string
 ) => {
-  let {
+  const {
     hash,
     from,
     minedAt,
