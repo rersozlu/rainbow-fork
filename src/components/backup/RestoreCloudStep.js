@@ -17,6 +17,7 @@ import { WrappedAlert as Alert } from '@/helpers/alert';
 import {
   cloudBackupPasswordMinLength,
   isCloudBackupPasswordValid,
+  normalizeAndroidBackupFilename,
 } from '@/handlers/cloudBackup';
 import { removeWalletData } from '@/handlers/localstorage/removeWallet';
 import walletBackupTypes from '@/helpers/walletBackupTypes';
@@ -38,6 +39,7 @@ import Routes from '@/navigation/routesNames';
 import styled from '@/styled-thing';
 import { margin, padding } from '@/styles';
 import logger from '@/utils/logger';
+import { IS_ANDROID } from '@/env';
 
 const DescriptionText = styled(Text).attrs(({ theme: { colors } }) => ({
   align: 'center',
@@ -182,12 +184,19 @@ export default function RestoreCloudStep({
               Object.keys(wallets).map(walletId => {
                 logger.log('updating backup state of wallet', walletId);
                 logger.log('backupSelected?.name', backupSelected?.name);
+
+                let filename = backupSelected?.name;
+
+                if (IS_ANDROID && filename) {
+                  // removes rainbow.me/wallet-backups/ from filename
+                  filename = normalizeAndroidBackupFilename(filename);
+                }
                 // Mark the wallet as backed up
                 return dispatch(
                   setWalletBackedUp(
                     walletId,
                     walletBackupTypes.cloud,
-                    backupSelected?.name,
+                    filename,
                     false
                   )
                 );
