@@ -1,4 +1,3 @@
-import { Provider } from '@ethersproject/providers';
 import { useRoute } from '@react-navigation/native';
 import lang from 'i18n-js';
 import { isEmpty, isEqual } from 'lodash';
@@ -84,11 +83,15 @@ import { ETH_ADDRESS, ethUnits } from '@/references';
 import Routes from '@/navigation/routesNames';
 import { ethereumUtils, gasUtils } from '@/utils';
 import { useEthUSDPrice } from '@/utils/ethereumUtils';
-import logger from 'logger';
 import { IS_ANDROID, IS_TEST } from '@/env';
-import { SwapMetadata } from '@/raps/common';
 import store from '@/redux/store';
 import useParamsForExchangeModal from '@/hooks/useParamsForExchangeModal';
+import logger from '@/utils/logger';
+import {
+  CrosschainSwapActionParameters,
+  SwapActionParameters,
+} from '@/raps/common';
+import { CROSSCHAIN_SWAPS, useExperimentalFlag } from '@/config';
 
 export const DEFAULT_SLIPPAGE_BIPS = {
   [Network.mainnet]: 100,
@@ -167,6 +170,8 @@ export default function ExchangeModal({
     params: { inputAsset: SwappableAsset; outputAsset: SwappableAsset };
   }>();
 
+  const crosschainSwapsEnabled = useExperimentalFlag(CROSSCHAIN_SWAPS);
+
   useLayoutEffect(() => {
     dispatch(updateSwapTypeDetails(type, typeSpecificParams));
   }, [dispatch, type, typeSpecificParams]);
@@ -185,6 +190,26 @@ export default function ExchangeModal({
     dangerouslyGetParent,
     addListener,
   } = useNavigation();
+
+  const isDeposit = type === ExchangeModalTypes.deposit;
+  const isWithdrawal = type === ExchangeModalTypes.withdrawal;
+  const isSavings = isDeposit || isWithdrawal;
+  const {
+    selectedGasFee,
+    gasFeeParamsBySpeed,
+    startPollingGasFees,
+    stopPollingGasFees,
+    updateDefaultGasLimit,
+    updateGasFeeOption,
+    updateTxFee,
+    txNetwork,
+    isGasReady,
+  } = useGas();
+  const {
+    accountAddress,
+    flashbotsEnabled,
+    nativeCurrency,
+  } = useAccountSettings();
 
   // if the default input is on a different network than
   // we want to update the output to be on the same, if its not available -> null
@@ -223,29 +248,7 @@ export default function ExchangeModal({
     }
   }, [defaultInputAsset, defaultOutputAsset]);
 
-  const isDeposit = type === ExchangeModalTypes.deposit;
-  const isWithdrawal = type === ExchangeModalTypes.withdrawal;
-  const isSavings = isDeposit || isWithdrawal;
-  const {
-    selectedGasFee,
-    gasFeeParamsBySpeed,
-    startPollingGasFees,
-    stopPollingGasFees,
-    updateDefaultGasLimit,
-    updateGasFeeOption,
-    updateTxFee,
-    txNetwork,
-    isGasReady,
-  } = useGas();
-  const {
-    accountAddress,
-    flashbotsEnabled,
-    nativeCurrency,
-  } = useAccountSettings();
-
   const [isAuthorizing, setIsAuthorizing] = useState(false);
-  const [currentProvider, setCurrentProvider] = useState<Provider>();
-
   const prevGasFeesParamsBySpeed = usePrevious(gasFeeParamsBySpeed);
   const prevTxNetwork = usePrevious(txNetwork);
 
@@ -272,20 +275,35 @@ export default function ExchangeModal({
     updateOutputAmount,
   } = useSwapInputHandlers();
 
-  const chainId = useMemo(() => {
-    if (inputCurrency?.type || outputCurrency?.type) {
-      return ethereumUtils.getChainIdFromType(
-        inputCurrency?.type! ?? outputCurrency?.type!
-      );
-    }
+  const {
+    inputNetwork,
+    outputNetwork,
+    chainId,
+    currentNetwork,
+    isCrosschainSwap,
+  } = useMemo(() => {
+    const inputNetwork = ethereumUtils.getNetworkFromType(inputCurrency?.type);
+    const outputNetwork = ethereumUtils.getNetworkFromType(
+      outputCurrency?.type
+    );
+    const chainId =
+      inputCurrency?.type || outputCurrency?.type
+        ? ethereumUtils.getChainIdFromType(
+            inputCurrency?.type ?? outputCurrency?.type
+          )
+        : 1;
+    const currentNetwork = ethereumUtils.getNetworkFromChainId(chainId);
+    const isCrosschainSwap =
+      crosschainSwapsEnabled && inputNetwork !== outputNetwork;
 
-    return 1;
-  }, [inputCurrency, outputCurrency]);
-
-  const currentNetwork = useMemo(
-    () => ethereumUtils.getNetworkFromChainId(chainId),
-    [chainId]
-  );
+    return {
+      inputNetwork,
+      outputNetwork,
+      chainId,
+      currentNetwork,
+      isCrosschainSwap,
+    };
+  }, [crosschainSwapsEnabled, inputCurrency?.type, outputCurrency?.type]);
 
   const {
     flipCurrencies,
@@ -293,6 +311,8 @@ export default function ExchangeModal({
     navigateToSelectOutputCurrency,
   } = useSwapCurrencyHandlers({
     currentNetwork,
+    inputNetwork,
+    outputNetwork,
     defaultInputAsset,
     defaultOutputAsset: defaultOutputAssetOverride,
     fromDiscover,
@@ -333,22 +353,11 @@ export default function ExchangeModal({
 
   const defaultGasLimit = useMemo(() => {
     const basicSwap = ethereumUtils.getBasicSwapGasLimit(Number(chainId));
-    return isDeposit
-      ? ethUnits.basic_deposit
-      : isWithdrawal
-      ? ethUnits.basic_withdrawal
-      : basicSwap;
+    if (isDeposit) return ethUnits.basic_deposit;
+    return isWithdrawal ? ethUnits.basic_withdrawal : basicSwap;
   }, [chainId, isDeposit, isWithdrawal]);
 
   const getNextNonce = useCurrentNonce(accountAddress, currentNetwork);
-
-  useEffect(() => {
-    const getProvider = async () => {
-      const p = await getProviderForNetwork(currentNetwork);
-      setCurrentProvider(p);
-    };
-    getProvider();
-  }, [currentNetwork]);
 
   const {
     result: {
@@ -363,7 +372,7 @@ export default function ExchangeModal({
     loading,
     resetSwapInputs,
     quoteError,
-  } = useSwapDerivedOutputs(Number(chainId), type);
+  } = useSwapDerivedOutputs(type);
 
   const lastTradeDetails = usePrevious(tradeDetails);
   const isSufficientBalance = useSwapIsSufficientBalance(inputAmount);
@@ -440,15 +449,18 @@ export default function ExchangeModal({
 
   const updateGasLimit = useCallback(async () => {
     try {
-      const swapParams = {
+      const provider = await getProviderForNetwork(currentNetwork);
+      const swapParams:
+        | SwapActionParameters
+        | CrosschainSwapActionParameters = {
         chainId,
         inputAmount: inputAmount!,
         outputAmount: outputAmount!,
-        provider: currentProvider!,
+        provider,
         tradeDetails: tradeDetails!,
       };
 
-      const rapType = getSwapRapTypeByExchangeType(type);
+      const rapType = getSwapRapTypeByExchangeType(type, isCrosschainSwap);
       const gasLimit = await getSwapRapEstimationByType(rapType, swapParams);
       if (gasLimit) {
         if (currentNetwork === Network.optimism) {
@@ -460,7 +472,7 @@ export default function ExchangeModal({
                 to: tradeDetails.to ?? null,
                 value: tradeDetails.value,
               },
-              currentProvider!
+              provider
             );
             updateTxFee(gasLimit, null, l1GasFeeOptimism);
           } else {
@@ -480,9 +492,9 @@ export default function ExchangeModal({
   }, [
     chainId,
     currentNetwork,
-    currentProvider,
     defaultGasLimit,
     inputAmount,
+    isCrosschainSwap,
     outputAmount,
     tradeDetails,
     type,
@@ -506,6 +518,7 @@ export default function ExchangeModal({
     prevGasFeesParamsBySpeed,
     updateTxFee,
   ]);
+
   // Update gas limit
   useEffect(() => {
     if (
@@ -543,10 +556,6 @@ export default function ExchangeModal({
     updateDefaultGasLimit,
     flashbots,
   ]);
-
-  const handlePressMaxBalance = useCallback(async () => {
-    updateMaxInputAmount();
-  }, [updateMaxInputAmount]);
 
   const checkGasVsOutput = async (gasPrice: string, outputPrice: string) => {
     if (
@@ -617,12 +626,14 @@ export default function ExchangeModal({
           slippageInBips,
           source,
         } = store.getState().swap;
-        const swapParameters = {
+        const swapParameters:
+          | SwapActionParameters
+          | CrosschainSwapActionParameters = {
           chainId,
           flashbots,
           inputAmount: inputAmount!,
-          nonce,
           outputAmount: outputAmount!,
+          nonce,
           tradeDetails: tradeDetails!,
           meta: {
             flashbots,
@@ -635,7 +646,7 @@ export default function ExchangeModal({
           },
         };
 
-        const rapType = getSwapRapTypeByExchangeType(type);
+        const rapType = getSwapRapTypeByExchangeType(type, isCrosschainSwap);
         await executeRap(wallet, rapType, swapParameters, callback);
         logger.log('[exchange - handle submit] executed rap!');
         const slippage = slippageInBips / 100;
@@ -683,6 +694,7 @@ export default function ExchangeModal({
       inputCurrency?.address,
       inputCurrency?.name,
       inputCurrency?.symbol,
+      isCrosschainSwap,
       navigate,
       outputAmount,
       outputCurrency?.address,
@@ -983,9 +995,9 @@ export default function ExchangeModal({
                 nativeAmount={nativeAmountDisplay}
                 nativeCurrency={nativeCurrency}
                 nativeFieldRef={nativeFieldRef}
-                network={currentNetwork}
+                network={inputNetwork}
                 onFocus={handleFocus}
-                onPressMaxBalance={handlePressMaxBalance}
+                onPressMaxBalance={updateMaxInputAmount}
                 onPressSelectInputCurrency={navigateToSelectInputCurrency}
                 setInputAmount={updateInputAmount}
                 setNativeAmount={updateNativeAmount}
@@ -997,9 +1009,11 @@ export default function ExchangeModal({
               {showOutputField && (
                 <ExchangeOutputField
                   editable={
-                    !!outputCurrency && currentNetwork !== Network.arbitrum
+                    !!outputCurrency &&
+                    currentNetwork !== Network.arbitrum &&
+                    !isCrosschainSwap
                   }
-                  network={currentNetwork}
+                  network={outputNetwork}
                   onFocus={handleFocus}
                   onPressSelectOutputCurrency={() =>
                     navigateToSelectOutputCurrency(chainId)
