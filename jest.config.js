@@ -6,9 +6,6 @@ module.exports = {
   preset: 'react-native',
   setupFiles: ['./config/test/jest-setup.js'],
   testPathIgnorePatterns: ['node_modules', 'e2e'],
-  transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|react-native-keyboard-area|@react-native(-community)?)/)',
-  ],
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
     prefix: '<rootDir>',
   }),
