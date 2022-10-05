@@ -124,7 +124,7 @@ export const showTransactionDetailsSheet = (
     return;
   }
 
-  const parentTxHash = hash?.includes('-') ? hash.split('-')[0] : hash;
+  const parentTxHash = ethereumUtils.getHash(transactionDetails);
   const data = metadataStorage.getString(parentTxHash?.toLowerCase() ?? '');
   const wrappedMeta = data ? JSON.parse(data) : {};
   let parsedMeta: undefined | SwapMetadata;
