@@ -54,7 +54,12 @@ import {
   NotificationRelationship,
 } from './settings';
 import walletTypes from '@/helpers/walletTypes';
-import { trackTappedPushNotification } from '@/notifications/analytics';
+import {
+  NotificationSubscriptionChangesListener,
+  registerNotificationSubscriptionChangesListener,
+  trackTappedPushNotification,
+  trackWalletsSubscribedForNotifications,
+} from '@/notifications/analytics';
 
 type Callback = () => void;
 
@@ -70,6 +75,7 @@ export const NotificationsHandler = ({ children, walletReady }: Props) => {
     contacts,
   });
   const prevWalletReady = usePrevious(walletReady);
+  const subscriptionChangesListener = useRef<NotificationSubscriptionChangesListener>();
   const onTokenRefreshListener = useRef<Callback>();
   const foregroundNotificationListener = useRef<Callback>();
   const notificationOpenedListener = useRef<Callback>();
@@ -325,6 +331,8 @@ export const NotificationsHandler = ({ children, walletReady }: Props) => {
   useEffect(() => {
     setupAndroidChannels();
     saveFCMToken();
+    trackWalletsSubscribedForNotifications();
+    subscriptionChangesListener.current = registerNotificationSubscriptionChangesListener();
     onTokenRefreshListener.current = registerTokenRefreshListener();
     foregroundNotificationListener.current = messaging().onMessage(
       onForegroundRemoteNotification
@@ -347,6 +355,7 @@ export const NotificationsHandler = ({ children, walletReady }: Props) => {
     );
 
     return () => {
+      subscriptionChangesListener.current?.remove();
       onTokenRefreshListener.current?.();
       foregroundNotificationListener.current?.();
       notificationOpenedListener.current?.();
